@@ -172,9 +172,8 @@ void raycast() {
     ivec2 map_pos = {to_world(player.pos.x), to_world(player.pos.y)};
 
     // draw rays
-    f32 fov = player.fov;
-    f32 step = fov / VIEWPORT_WIDTH;
-    f32 initial_angle = player.angle - fov / 2.0;
+    f32 step = player.fov / VIEWPORT_WIDTH;
+    f32 initial_angle = player.angle - player.fov / 2.0;
 
     for (f32 i = start_render_x; i < end_render_x; i += 1.0) {
         f32 ray_angle = initial_angle + (i * step);
@@ -217,8 +216,8 @@ void raycast() {
 
             if (illuminate) {
                 // color based on distance
-                f32 inv_dist = 1.0 - (dist / RAYCAST_MAX_DIST);
-                u32 intensity = (u32)(255 * inv_dist);
+                f32 inv_dist_ratio = 1.0 - (dist / RAYCAST_MAX_DIST);
+                u32 intensity = (u32)(255 * inv_dist_ratio);
                 intensity = (intensity << 24) | (intensity << 16) | (intensity << 8) | 0xff;
 
                 color = color & intensity;
@@ -239,7 +238,7 @@ int main(int argc, char *argv[]) {
         SDL_Init(SDL_INIT_VIDEO) == 0, "SDL_Init failed: %s\n", SDL_GetError());
 
     state.window =
-        SDL_CreateWindow("Press F to toggle single-ray mode, I to toggle illumination",
+        SDL_CreateWindow("WASD to move, F to toggle single-ray mode, I to toggle illumination",
                          SDL_WINDOWPOS_CENTERED_DISPLAY(0),
                          SDL_WINDOWPOS_CENTERED_DISPLAY(0),
                          SCREEN_WIDTH,
@@ -251,7 +250,8 @@ int main(int argc, char *argv[]) {
         SDL_CreateRenderer(state.window, -1, SDL_RENDERER_ACCELERATED);
     ASSERT(state.renderer, "SDL_CreateRenderer failed: %s\n", SDL_GetError());
 
-    state.texture = SDL_CreateTexture(state.renderer,
+    state.texture =
+        SDL_CreateTexture(state.renderer,
                                       SDL_PIXELFORMAT_RGBA8888,
                                       SDL_TEXTUREACCESS_STREAMING,
                                       SCREEN_WIDTH,
