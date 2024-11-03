@@ -65,6 +65,8 @@ struct {
 
 f32 start_render_x = 0.0;
 f32 end_render_x = VIEWPORT_WIDTH;
+
+bool illuminate = false;
 SDL_TimerID last_time_pressed = 0;
 // =================================================
 
@@ -211,7 +213,18 @@ void raycast() {
             ivec2 p1 = {RAYCAST_X_OFFSET + i,
                         VIEWPORT_HEIGHT / 2 + wall_height / 2};
 
-            draw_line(p0, p1, color_map[tile]);
+            u32 color = color_map[tile];
+
+            if (illuminate) {
+                // color based on distance
+                f32 inv_dist = 1.0 - (dist / RAYCAST_MAX_DIST);
+                u32 intensity = (u32)(255 * inv_dist);
+                intensity = (intensity << 24) | (intensity << 16) | (intensity << 8) | 0xff;
+
+                color = color & intensity;
+            }
+
+            draw_line(p0, p1, color);
         }
 
         // draw ray in top down view
@@ -226,7 +239,7 @@ int main(int argc, char *argv[]) {
         SDL_Init(SDL_INIT_VIDEO) == 0, "SDL_Init failed: %s\n", SDL_GetError());
 
     state.window =
-        SDL_CreateWindow("Raycaster visualizer - press F to toggle single ray mode",
+        SDL_CreateWindow("Press F to toggle single-ray mode, I to toggle illumination",
                          SDL_WINDOWPOS_CENTERED_DISPLAY(0),
                          SDL_WINDOWPOS_CENTERED_DISPLAY(0),
                          SCREEN_WIDTH,
@@ -336,6 +349,7 @@ int main(int argc, char *argv[]) {
         }
 
 
+        // toggles
         if (keys[SDL_SCANCODE_F]) {
             // check if enough time has passed since last press
             if (SDL_GetTicks() - last_time_pressed > 300) {
@@ -347,6 +361,13 @@ int main(int argc, char *argv[]) {
                     start_render_x = 0.0;
                     end_render_x = VIEWPORT_WIDTH;
                 }
+            }
+        }
+        if (keys[SDL_SCANCODE_I]) {
+            // check if enough time has passed since last press
+            if (SDL_GetTicks() - last_time_pressed > 300) {
+                last_time_pressed = SDL_GetTicks();
+                illuminate = !illuminate;
             }
         }
 
